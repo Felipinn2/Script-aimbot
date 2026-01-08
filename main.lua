@@ -1,111 +1,244 @@
 -- =================================================================
--- CONFIGURAÇÕES ELITE V7
+-- CONFIGURAÇÕES ELITE V9 - IKARO MOBILE
 -- =================================================================
 local Settings = {
     Aimbot = false,
-    WallCheck = true, -- Só mira se não houver paredes na frente
+    WallCheck = true,
     Box = false,
     Skeleton = false,
     Lines = false,
+    Names = false,
+    Dist = false,
     Health = false,
-    TeamCheck = false,
+    Fly = false,
+    FlySpeed = 50,
     FOV = 120,
     MaxDistance = 800,
-    Smoothness = 0.25
+    Smoothness = 0.2
 }
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 
 -- =================================================================
--- INTERFACE (GUI)
+-- INTERFACE (ESTILO ABAS + iOS SWITCHES)
 -- =================================================================
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local MainFrame = Instance.new("Frame", ScreenGui)
 local OpenBtn = Instance.new("TextButton", ScreenGui)
 
 OpenBtn.Size = UDim2.new(0, 100, 0, 40)
-OpenBtn.Position = UDim2.new(0, 10, 0.5, 0)
+OpenBtn.Position = UDim2.new(0, 10, 0.4, 0)
 OpenBtn.Text = "ABRIR"
 OpenBtn.Visible = false
-OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+OpenBtn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", OpenBtn)
 
-MainFrame.Size = UDim2.new(0, 240, 0, 420)
-MainFrame.Position = UDim2.new(0, 10, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 260, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -130, 0.4, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame)
 
-local List = Instance.new("UIListLayout", MainFrame)
-List.Padding = UDim.new(0, 5)
-List.HorizontalAlignment = "Center"
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = "IKARO MOBILE"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.BackgroundTransparency = 1
+Title.Font = "GothamBold"
 
-local function AddToggle(text, prop)
-    local b = Instance.new("TextButton", MainFrame)
-    b.Size = UDim2.new(0, 220, 0, 35)
-    b.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    b.Text = text .. ": OFF"
+local TabFrame = Instance.new("Frame", MainFrame)
+TabFrame.Size = UDim2.new(1, -20, 0, 35)
+TabFrame.Position = UDim2.new(0, 10, 0, 40)
+TabFrame.BackgroundTransparency = 1
+Instance.new("UIListLayout", TabFrame).FillDirection = "Horizontal"
+TabFrame.UIListLayout.Padding = UDim.new(0, 5)
+
+local AimTab = Instance.new("ScrollingFrame", MainFrame)
+local EspTab = Instance.new("ScrollingFrame", MainFrame)
+local MiscTab = Instance.new("ScrollingFrame", MainFrame)
+
+for _, f in pairs({AimTab, EspTab, MiscTab}) do
+    f.Size = UDim2.new(1, -20, 1, -100)
+    f.Position = UDim2.new(0, 10, 0, 85)
+    f.BackgroundTransparency = 1
+    f.Visible = false
+    f.ScrollBarThickness = 0
+    Instance.new("UIListLayout", f).Padding = UDim.new(0, 5)
+end
+AimTab.Visible = true
+
+local function CreateTabBtn(name, target)
+    local b = Instance.new("TextButton", TabFrame)
+    b.Size = UDim2.new(0.23, 0, 1, 0)
+    b.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    b.Text = name
     b.TextColor3 = Color3.new(1,1,1)
-    b.Font = "Gotham"
+    b.Font = "GothamBold"
+    b.TextSize = 10
     Instance.new("UICorner", b)
-    
     b.MouseButton1Click:Connect(function()
+        AimTab.Visible = false; EspTab.Visible = false; MiscTab.Visible = false
+        target.Visible = true
+    end)
+    return b
+end
+
+CreateTabBtn("AIM", AimTab)
+CreateTabBtn("ESP", EspTab)
+CreateTabBtn("MISC", MiscTab)
+local fch = CreateTabBtn("FECHA", AimTab)
+fch.MouseButton1Click:Connect(function() MainFrame.Visible = false; OpenBtn.Visible = true end)
+OpenBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenBtn.Visible = false end)
+
+local function AddSwitch(text, prop, parent)
+    local f = Instance.new("Frame", parent)
+    f.Size = UDim2.new(1, 0, 0, 35)
+    f.BackgroundTransparency = 1
+    local l = Instance.new("TextLabel", f)
+    l.Size = UDim2.new(0.7, 0, 1, 0); l.Text = text .. ": " .. (Settings[prop] and "ON" or "OFF")
+    l.TextColor3 = Color3.new(1,1,1); l.TextXAlignment = "Left"; l.BackgroundTransparency = 1
+    local sw = Instance.new("TextButton", f)
+    sw.Size = UDim2.new(0, 40, 0, 20); sw.Position = UDim2.new(1, -40, 0.5, -10)
+    sw.BackgroundColor3 = Settings[prop] and Color3.fromRGB(48, 209, 88) or Color3.fromRGB(60, 60, 65)
+    sw.Text = ""; Instance.new("UICorner", sw).CornerRadius = UDim.new(1, 0)
+    local c = Instance.new("Frame", sw)
+    c.Size = UDim2.new(0, 16, 0, 16); c.Position = Settings[prop] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+    c.BackgroundColor3 = Color3.new(1,1,1); Instance.new("UICorner", c).CornerRadius = UDim.new(1, 0)
+    sw.MouseButton1Click:Connect(function()
         Settings[prop] = not Settings[prop]
-        b.Text = text .. ": " .. (Settings[prop] and "ON" or "OFF")
-        b.BackgroundColor3 = Settings[prop] and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(40, 40, 40)
+        l.Text = text .. ": " .. (Settings[prop] and "ON" or "OFF")
+        TweenService:Create(sw, TweenInfo.new(0.2), {BackgroundColor3 = Settings[prop] and Color3.fromRGB(48, 209, 88) or Color3.fromRGB(60, 60, 65)}):Play()
+        TweenService:Create(c, TweenInfo.new(0.2), {Position = Settings[prop] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}):Play()
     end)
 end
 
-AddToggle("Aimbot", "Aimbot")
-AddToggle("Wall Check", "WallCheck")
-AddToggle("ESP Box", "Box")
-AddToggle("ESP Skeleton", "Skeleton")
-AddToggle("ESP Linha", "Lines")
-AddToggle("ESP Vida", "Health")
+-- Botões
+AddSwitch("Aimbot Master", "Aimbot", AimTab)
+AddSwitch("Wall Check", "WallCheck", AimTab)
+AddSwitch("ESP Box", "Box", EspTab)
+AddSwitch("ESP Nome", "Names", EspTab)
+AddSwitch("ESP Linha", "Lines", EspTab)
+AddSwitch("ESP Skeleton", "Skeleton", EspTab)
+AddSwitch("ESP Health", "Health", EspTab)
+AddSwitch("Fly Mode", "Fly", MiscTab)
 
-local FOVBtn = Instance.new("TextButton", MainFrame)
-FOVBtn.Size = UDim2.new(0, 220, 0, 35)
-FOVBtn.Text = "FOV: " .. Settings.FOV
-FOVBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-Instance.new("UICorner", FOVBtn)
-FOVBtn.MouseButton1Click:Connect(function()
-    Settings.FOV = (Settings.FOV >= 400) and 80 or Settings.FOV + 40
-    FOVBtn.Text = "FOV: " .. Settings.FOV
+-- =================================================================
+-- LÓGICA DE VOO (FLY)
+-- =================================================================
+local bodyVelocity, bodyGyro
+RunService.RenderStepped:Connect(function()
+    if Settings.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local HRP = LocalPlayer.Character.HumanoidRootPart
+        if not bodyVelocity then
+            bodyVelocity = Instance.new("BodyVelocity", HRP)
+            bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            bodyGyro = Instance.new("BodyGyro", HRP)
+            bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+            bodyGyro.P = 9e4
+        end
+        bodyGyro.CFrame = Camera.CFrame
+        local moveDir = LocalPlayer.Character.Humanoid.MoveDirection
+        local flyDir = moveDir * Settings.FlySpeed
+        
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            flyDir = flyDir + Vector3.new(0, Settings.FlySpeed, 0)
+        elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            flyDir = flyDir - Vector3.new(0, Settings.FlySpeed, 0)
+        end
+        bodyVelocity.Velocity = flyDir
+    else
+        if bodyVelocity then bodyVelocity:Destroy(); bodyVelocity = nil end
+        if bodyGyro then bodyGyro:Destroy(); bodyGyro = nil end
+    end
 end)
 
 -- =================================================================
--- FUNÇÕES DE SUPORTE
+-- LÓGICA DE COMBATE & VISUAIS
 -- =================================================================
 local function IsVisible(target)
     if not Settings.WallCheck then return true end
     local char = target.Parent
-    local ray = Ray.new(Camera.CFrame.Position, (target.Position - Camera.CFrame.Position).Unit * 1000)
-    local hit, pos = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
-    if hit and hit:IsDescendantOf(char) then
-        return true
-    end
-    return false
+    local direction = (target.Position - Camera.CFrame.Position).Unit * 1000
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    local res = workspace:Raycast(Camera.CFrame.Position, direction, params)
+    return res and res.Instance:IsDescendantOf(char) or false
 end
+
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1; FOVCircle.Color = Color3.fromRGB(40, 40, 40); FOVCircle.Transparency = 0.3
 
 local ESP_Table = {}
-local function CreateESP(Player)
-    if Player == LocalPlayer then return end
-    local d = {
-        Box = Drawing.new("Square"),
-        Line = Drawing.new("Line"),
-        Health = Drawing.new("Line"),
-        S1 = Drawing.new("Line"), -- Cabeça para Torso
-        S2 = Drawing.new("Line")  -- Ombro a Ombro
+local function CreateESP(P)
+    if P == LocalPlayer then return end
+    ESP_Table[P] = {
+        Box = Drawing.new("Square"), Line = Drawing.new("Line"),
+        Name = Drawing.new("Text"), Health = Drawing.new("Line"), Skeleton = Drawing.new("Line")
     }
-    d.Box.Filled = false; d.Box.Thickness = 1
-    ESP_Table[Player] = d
+    ESP_Table[P].Name.Size = 14; ESP_Table[P].Name.Center = true; ESP_Table[P].Name.Outline = true
 end
 
--- =================================================================
+RunService.RenderStepped:Connect(function()
+    local Center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    FOVCircle.Visible = Settings.Aimbot; FOVCircle.Radius = Settings.FOV; FOVCircle.Position = Center
+
+    for P, D in pairs(ESP_Table) do
+        local Char = P.Character
+        local Hum = Char and Char:FindFirstChildOfClass("Humanoid")
+        local HRP = Char and Char:FindFirstChild("HumanoidRootPart")
+        
+        if Char and Hum and HRP and Hum.Health > 0 then
+            local pos, vis = Camera:WorldToViewportPoint(HRP.Position)
+            if vis then
+                local head = Char:FindFirstChild("Head")
+                if head then
+                    local headP = Camera:WorldToViewportPoint(head.Position)
+                    local h = math.abs(headP.Y - Camera:WorldToViewportPoint(HRP.Position - Vector3.new(0,3.5,0)).Y)
+                    local w = h / 1.6
+                    
+                    D.Box.Visible = Settings.Box; D.Box.Size = Vector2.new(w, h); D.Box.Position = Vector2.new(pos.X - w/2, pos.Y - h/2)
+                    D.Box.Color = IsVisible(head) and Color3.new(0,1,0) or Color3.new(1,0,0)
+                    
+                    D.Name.Visible = Settings.Names; D.Name.Text = P.Name; D.Name.Position = Vector2.new(pos.X, pos.Y - h/2 - 15)
+                    D.Line.Visible = Settings.Lines; D.Line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y); D.Line.To = Vector2.new(pos.X, pos.Y + h/2)
+                    D.Skeleton.Visible = Settings.Skeleton; D.Skeleton.From = Vector2.new(headP.X, headP.Y); D.Skeleton.To = Vector2.new(pos.X, pos.Y)
+                    
+                    D.Health.Visible = Settings.Health; local hp = Hum.Health / Hum.MaxHealth
+                    D.Health.From = Vector2.new(pos.X - w/2 - 5, pos.Y + h/2); D.Health.To = Vector2.new(pos.X - w/2 - 5, (pos.Y + h/2) - (h * hp))
+                    D.Health.Color = Color3.fromHSV(hp * 0.3, 1, 1)
+                end
+            else for _, v in pairs(D) do v.Visible = false end end
+        else for _, v in pairs(D) do v.Visible = false end end
+    end
+
+    if Settings.Aimbot then
+        local target = nil
+        local mDist = Settings.FOV
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                local head = p.Character.Head
+                local p_pos, vis = Camera:WorldToViewportPoint(head.Position)
+                if vis and IsVisible(head) then
+                    local d = (Vector2.new(p_pos.X, p_pos.Y) - Center).Magnitude
+                    if d < mDist then mDist = d; target = head end
+                end
+            end
+        end
+        if target then Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), Settings.Smoothness) end
+    end
+end)
+
+Players.PlayerAdded:Connect(CreateESP)
+for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 -- LOOP PRINCIPAL
 -- =================================================================
 RunService.RenderStepped:Connect(function()
