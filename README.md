@@ -1,147 +1,244 @@
--- ================== CONFIG ==================
-local ESP_BOX = true
-local ESP_LINE = true
-local ESP_NAME = true
-local AIMBOT = false
-local TEAM_CHECK = true
-local AIM_FOV = 200
+-- =================================================================
+-- CONFIGURAÇÕES ELITE V9 - IKARO MOBILE
+-- =================================================================
+local Settings = {
+    Aimbot = false,
+    WallCheck = true,
+    Box = false,
+    Skeleton = false,
+    Lines = false,
+    Names = false,
+    Dist = false,
+    Health = false,
+    Fly = false,
+    FlySpeed = 50,
+    FOV = 120,
+    MaxDistance = 800,
+    Smoothness = 0.2
+}
 
--- ================== SERVICES ==================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
-
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 
--- ================== GUI ==================
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "UniversalESPPanel"
+-- =================================================================
+-- INTERFACE (ESTILO ABAS + iOS SWITCHES)
+-- =================================================================
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+local OpenBtn = Instance.new("TextButton", ScreenGui)
 
--- OPEN BUTTON
-local openBtn = Instance.new("TextButton", gui)
-openBtn.Size = UDim2.new(0, 50, 0, 50)
-openBtn.Position = UDim2.new(0, 20, 0.5, 0)
-openBtn.Text = "≡"
-openBtn.TextSize = 24
-openBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
-openBtn.TextColor3 = Color3.new(1,1,1)
-openBtn.BorderSizePixel = 0
-openBtn.Visible = true
+OpenBtn.Size = UDim2.new(0, 100, 0, 40)
+OpenBtn.Position = UDim2.new(0, 10, 0.4, 0)
+OpenBtn.Text = "ABRIR"
+OpenBtn.Visible = false
+OpenBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+OpenBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", OpenBtn)
 
--- PANEL
-local panel = Instance.new("Frame", gui)
-panel.Size = UDim2.new(0, 220, 0, 320)
-panel.Position = UDim2.new(0, 80, 0.3, 0)
-panel.BackgroundColor3 = Color3.fromRGB(20,20,20)
-panel.BorderSizePixel = 0
-panel.Visible = true
-panel.Active = true
-panel.Draggable = true
+MainFrame.Size = UDim2.new(0, 260, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -130, 0.4, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame)
 
--- TOP BAR
-local top = Instance.new("Frame", panel)
-top.Size = UDim2.new(1, 0, 0, 30)
-top.BackgroundColor3 = Color3.fromRGB(35,35,35)
-top.BorderSizePixel = 0
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = "IKARO MOBILE"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.BackgroundTransparency = 1
+Title.Font = "GothamBold"
 
-local close = Instance.new("TextButton", top)
-close.Size = UDim2.new(0, 30, 1, 0)
-close.Position = UDim2.new(1, -30, 0, 0)
-close.Text = "X"
-close.BackgroundColor3 = Color3.fromRGB(150,40,40)
-close.TextColor3 = Color3.new(1,1,1)
-close.BorderSizePixel = 0
+local TabFrame = Instance.new("Frame", MainFrame)
+TabFrame.Size = UDim2.new(1, -20, 0, 35)
+TabFrame.Position = UDim2.new(0, 10, 0, 40)
+TabFrame.BackgroundTransparency = 1
+Instance.new("UIListLayout", TabFrame).FillDirection = "Horizontal"
+TabFrame.UIListLayout.Padding = UDim.new(0, 5)
 
-local minimize = Instance.new("TextButton", top)
-minimize.Size = UDim2.new(0, 30, 1, 0)
-minimize.Position = UDim2.new(1, -60, 0, 0)
-minimize.Text = "-"
-minimize.BackgroundColor3 = Color3.fromRGB(60,60,60)
-minimize.TextColor3 = Color3.new(1,1,1)
-minimize.BorderSizePixel = 0
+local AimTab = Instance.new("ScrollingFrame", MainFrame)
+local EspTab = Instance.new("ScrollingFrame", MainFrame)
+local MiscTab = Instance.new("ScrollingFrame", MainFrame)
 
--- BUTTON CREATOR
-local function btn(text, y)
-	local b = Instance.new("TextButton", panel)
-	b.Size = UDim2.new(1, -20, 0, 35)
-	b.Position = UDim2.new(0, 10, 0, y)
-	b.Text = text
-	b.BackgroundColor3 = Color3.fromRGB(45,45,45)
-	b.TextColor3 = Color3.new(1,1,1)
-	b.BorderSizePixel = 0
-	b.TextSize = 15
-	return b
+for _, f in pairs({AimTab, EspTab, MiscTab}) do
+    f.Size = UDim2.new(1, -20, 1, -100)
+    f.Position = UDim2.new(0, 10, 0, 85)
+    f.BackgroundTransparency = 1
+    f.Visible = false
+    f.ScrollBarThickness = 0
+    Instance.new("UIListLayout", f).Padding = UDim.new(0, 5)
+end
+AimTab.Visible = true
+
+local function CreateTabBtn(name, target)
+    local b = Instance.new("TextButton", TabFrame)
+    b.Size = UDim2.new(0.23, 0, 1, 0)
+    b.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    b.Text = name
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = "GothamBold"
+    b.TextSize = 10
+    Instance.new("UICorner", b)
+    b.MouseButton1Click:Connect(function()
+        AimTab.Visible = false; EspTab.Visible = false; MiscTab.Visible = false
+        target.Visible = true
+    end)
+    return b
 end
 
-local boxBtn   = btn("ESP BOX: ON", 40)
-local lineBtn  = btn("ESP LINE: ON", 80)
-local nameBtn  = btn("ESP NAME: ON", 120)
-local teamBtn  = btn("TEAM CHECK: ON", 160)
-local aimBtn   = btn("AIMBOT: OFF", 200)
+CreateTabBtn("AIM", AimTab)
+CreateTabBtn("ESP", EspTab)
+CreateTabBtn("MISC", MiscTab)
+local fch = CreateTabBtn("FECHA", AimTab)
+fch.MouseButton1Click:Connect(function() MainFrame.Visible = false; OpenBtn.Visible = true end)
+OpenBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; OpenBtn.Visible = false end)
 
-local fovText = Instance.new("TextLabel", panel)
-fovText.Size = UDim2.new(1, -20, 0, 25)
-fovText.Position = UDim2.new(0, 10, 0, 245)
-fovText.Text = "FOV: "..AIM_FOV
-fovText.BackgroundTransparency = 1
-fovText.TextColor3 = Color3.new(1,1,1)
+local function AddSwitch(text, prop, parent)
+    local f = Instance.new("Frame", parent)
+    f.Size = UDim2.new(1, 0, 0, 35)
+    f.BackgroundTransparency = 1
+    local l = Instance.new("TextLabel", f)
+    l.Size = UDim2.new(0.7, 0, 1, 0); l.Text = text .. ": " .. (Settings[prop] and "ON" or "OFF")
+    l.TextColor3 = Color3.new(1,1,1); l.TextXAlignment = "Left"; l.BackgroundTransparency = 1
+    local sw = Instance.new("TextButton", f)
+    sw.Size = UDim2.new(0, 40, 0, 20); sw.Position = UDim2.new(1, -40, 0.5, -10)
+    sw.BackgroundColor3 = Settings[prop] and Color3.fromRGB(48, 209, 88) or Color3.fromRGB(60, 60, 65)
+    sw.Text = ""; Instance.new("UICorner", sw).CornerRadius = UDim.new(1, 0)
+    local c = Instance.new("Frame", sw)
+    c.Size = UDim2.new(0, 16, 0, 16); c.Position = Settings[prop] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+    c.BackgroundColor3 = Color3.new(1,1,1); Instance.new("UICorner", c).CornerRadius = UDim.new(1, 0)
+    sw.MouseButton1Click:Connect(function()
+        Settings[prop] = not Settings[prop]
+        l.Text = text .. ": " .. (Settings[prop] and "ON" or "OFF")
+        TweenService:Create(sw, TweenInfo.new(0.2), {BackgroundColor3 = Settings[prop] and Color3.fromRGB(48, 209, 88) or Color3.fromRGB(60, 60, 65)}):Play()
+        TweenService:Create(c, TweenInfo.new(0.2), {Position = Settings[prop] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)}):Play()
+    end)
+end
 
-local fovBtn = btn("ALTERAR FOV", 270)
+-- Botões
+AddSwitch("Aimbot Master", "Aimbot", AimTab)
+AddSwitch("Wall Check", "WallCheck", AimTab)
+AddSwitch("ESP Box", "Box", EspTab)
+AddSwitch("ESP Nome", "Names", EspTab)
+AddSwitch("ESP Linha", "Lines", EspTab)
+AddSwitch("ESP Skeleton", "Skeleton", EspTab)
+AddSwitch("ESP Health", "Health", EspTab)
+AddSwitch("Fly Mode", "Fly", MiscTab)
 
--- ================== BUTTON LOGIC ==================
-boxBtn.MouseButton1Click:Connect(function()
-	ESP_BOX = not ESP_BOX
-	boxBtn.Text = "ESP BOX: "..(ESP_BOX and "ON" or "OFF")
+-- =================================================================
+-- LÓGICA DE VOO (FLY)
+-- =================================================================
+local bodyVelocity, bodyGyro
+RunService.RenderStepped:Connect(function()
+    if Settings.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local HRP = LocalPlayer.Character.HumanoidRootPart
+        if not bodyVelocity then
+            bodyVelocity = Instance.new("BodyVelocity", HRP)
+            bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+            bodyGyro = Instance.new("BodyGyro", HRP)
+            bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+            bodyGyro.P = 9e4
+        end
+        bodyGyro.CFrame = Camera.CFrame
+        local moveDir = LocalPlayer.Character.Humanoid.MoveDirection
+        local flyDir = moveDir * Settings.FlySpeed
+        
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            flyDir = flyDir + Vector3.new(0, Settings.FlySpeed, 0)
+        elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+            flyDir = flyDir - Vector3.new(0, Settings.FlySpeed, 0)
+        end
+        bodyVelocity.Velocity = flyDir
+    else
+        if bodyVelocity then bodyVelocity:Destroy(); bodyVelocity = nil end
+        if bodyGyro then bodyGyro:Destroy(); bodyGyro = nil end
+    end
 end)
 
-lineBtn.MouseButton1Click:Connect(function()
-	ESP_LINE = not ESP_LINE
-	lineBtn.Text = "ESP LINE: "..(ESP_LINE and "ON" or "OFF")
+-- =================================================================
+-- LÓGICA DE COMBATE & VISUAIS
+-- =================================================================
+local function IsVisible(target)
+    if not Settings.WallCheck then return true end
+    local char = target.Parent
+    local direction = (target.Position - Camera.CFrame.Position).Unit * 1000
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {LocalPlayer.Character, Camera}
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    local res = workspace:Raycast(Camera.CFrame.Position, direction, params)
+    return res and res.Instance:IsDescendantOf(char) or false
+end
+
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1; FOVCircle.Color = Color3.fromRGB(40, 40, 40); FOVCircle.Transparency = 0.3
+
+local ESP_Table = {}
+local function CreateESP(P)
+    if P == LocalPlayer then return end
+    ESP_Table[P] = {
+        Box = Drawing.new("Square"), Line = Drawing.new("Line"),
+        Name = Drawing.new("Text"), Health = Drawing.new("Line"), Skeleton = Drawing.new("Line")
+    }
+    ESP_Table[P].Name.Size = 14; ESP_Table[P].Name.Center = true; ESP_Table[P].Name.Outline = true
+end
+
+RunService.RenderStepped:Connect(function()
+    local Center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    FOVCircle.Visible = Settings.Aimbot; FOVCircle.Radius = Settings.FOV; FOVCircle.Position = Center
+
+    for P, D in pairs(ESP_Table) do
+        local Char = P.Character
+        local Hum = Char and Char:FindFirstChildOfClass("Humanoid")
+        local HRP = Char and Char:FindFirstChild("HumanoidRootPart")
+        
+        if Char and Hum and HRP and Hum.Health > 0 then
+            local pos, vis = Camera:WorldToViewportPoint(HRP.Position)
+            if vis then
+                local head = Char:FindFirstChild("Head")
+                if head then
+                    local headP = Camera:WorldToViewportPoint(head.Position)
+                    local h = math.abs(headP.Y - Camera:WorldToViewportPoint(HRP.Position - Vector3.new(0,3.5,0)).Y)
+                    local w = h / 1.6
+                    
+                    D.Box.Visible = Settings.Box; D.Box.Size = Vector2.new(w, h); D.Box.Position = Vector2.new(pos.X - w/2, pos.Y - h/2)
+                    D.Box.Color = IsVisible(head) and Color3.new(0,1,0) or Color3.new(1,0,0)
+                    
+                    D.Name.Visible = Settings.Names; D.Name.Text = P.Name; D.Name.Position = Vector2.new(pos.X, pos.Y - h/2 - 15)
+                    D.Line.Visible = Settings.Lines; D.Line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y); D.Line.To = Vector2.new(pos.X, pos.Y + h/2)
+                    D.Skeleton.Visible = Settings.Skeleton; D.Skeleton.From = Vector2.new(headP.X, headP.Y); D.Skeleton.To = Vector2.new(pos.X, pos.Y)
+                    
+                    D.Health.Visible = Settings.Health; local hp = Hum.Health / Hum.MaxHealth
+                    D.Health.From = Vector2.new(pos.X - w/2 - 5, pos.Y + h/2); D.Health.To = Vector2.new(pos.X - w/2 - 5, (pos.Y + h/2) - (h * hp))
+                    D.Health.Color = Color3.fromHSV(hp * 0.3, 1, 1)
+                end
+            else for _, v in pairs(D) do v.Visible = false end end
+        else for _, v in pairs(D) do v.Visible = false end end
+    end
+
+    if Settings.Aimbot then
+        local target = nil
+        local mDist = Settings.FOV
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                local head = p.Character.Head
+                local p_pos, vis = Camera:WorldToViewportPoint(head.Position)
+                if vis and IsVisible(head) then
+                    local d = (Vector2.new(p_pos.X, p_pos.Y) - Center).Magnitude
+                    if d < mDist then mDist = d; target = head end
+                end
+            end
+        end
+        if target then Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), Settings.Smoothness) end
+    end
 end)
 
-nameBtn.MouseButton1Click:Connect(function()
-	ESP_NAME = not ESP_NAME
-	nameBtn.Text = "ESP NAME: "..(ESP_NAME and "ON" or "OFF")
-end)
-
-teamBtn.MouseButton1Click:Connect(function()
-	TEAM_CHECK = not TEAM_CHECK
-	teamBtn.Text = "TEAM CHECK: "..(TEAM_CHECK and "ON" or "OFF")
-end)
-
-aimBtn.MouseButton1Click:Connect(function()
-	AIMBOT = not AIMBOT
-	aimBtn.Text = "AIMBOT: "..(AIMBOT and "ON" or "OFF")
-end)
-
-fovBtn.MouseButton1Click:Connect(function()
-	AIM_FOV += 50
-	if AIM_FOV > 400 then AIM_FOV = 100 end
-	fovText.Text = "FOV: "..AIM_FOV
-end)
-
-close.MouseButton1Click:Connect(function()
-	panel.Visible = false
-	openBtn.Visible = true
-end)
-
-minimize.MouseButton1Click:Connect(function()
-	panel.Visible = false
-	openBtn.Visible = true
-end)
-
-openBtn.MouseButton1Click:Connect(function()
-	panel.Visible = true
-	openBtn.Visible = false
-end)
-
--- ================== FOV CIRCLE ==================
-local circle = Drawing.new("Circle")
-circle.Color = Color3.fromRGB(255,255,255)
-circle.Thickness = 1
-circle.Filled = false
+Players.PlayerAdded:Connect(CreateESP)
+for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 
 -- ================== ESP ==================
 local esp = {}
