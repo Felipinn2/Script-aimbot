@@ -1,143 +1,188 @@
--- =====================================================
---        PRO ESP & AIM PANEL (PC + MOBILE)
--- =====================================================
+-- =================================================================
+-- CONFIGURAÇÕES ELITE V7
+-- =================================================================
+local Settings = {
+    Aimbot = false,
+    WallCheck = true, -- Só mira se não houver paredes na frente
+    Box = false,
+    Skeleton = false,
+    Lines = false,
+    Health = false,
+    TeamCheck = false,
+    FOV = 120,
+    MaxDistance = 800,
+    Smoothness = 0.25
+}
 
--- ================== CONFIG ==================
-local ESP_BOX = true
-local ESP_LINE = true
-local ESP_NAME = true
-local AIMBOT = false
-local TEAM_CHECK = true
-local AIM_FOV = 200
-
--- ================== SERVICES ==================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local Camera = workspace.CurrentCamera
-
 local LocalPlayer = Players.LocalPlayer
 
--- ================== GUI ==================
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "ProESPPanel"
-gui.ResetOnSpawn = false
+-- =================================================================
+-- INTERFACE (GUI)
+-- =================================================================
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local MainFrame = Instance.new("Frame", ScreenGui)
+local OpenBtn = Instance.new("TextButton", ScreenGui)
 
--- OPEN BUTTON
-local openBtn = Instance.new("TextButton", gui)
-openBtn.Size = UDim2.new(0, 56, 0, 56)
-openBtn.Position = UDim2.new(0, 20, 0.5, -28)
-openBtn.Text = "☰"
-openBtn.Font = Enum.Font.GothamBold
-openBtn.TextSize = 26
-openBtn.BackgroundColor3 = Color3.fromRGB(22,22,22)
-openBtn.TextColor3 = Color3.new(1,1,1)
-openBtn.BorderSizePixel = 0
-Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0,14)
+OpenBtn.Size = UDim2.new(0, 100, 0, 40)
+OpenBtn.Position = UDim2.new(0, 10, 0.5, 0)
+OpenBtn.Text = "ABRIR"
+OpenBtn.Visible = false
+OpenBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 150)
+Instance.new("UICorner", OpenBtn)
 
--- PANEL
-local panel = Instance.new("Frame", gui)
-panel.Size = UDim2.new(0, 280, 0, 380)
-panel.Position = UDim2.new(0, -320, 0.5, -190)
-panel.BackgroundColor3 = Color3.fromRGB(18,18,18)
-panel.BorderSizePixel = 0
-panel.Active = true
-panel.Draggable = true
-Instance.new("UICorner", panel).CornerRadius = UDim.new(0,16)
+MainFrame.Size = UDim2.new(0, 240, 0, 420)
+MainFrame.Position = UDim2.new(0, 10, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame)
 
--- TOP BAR
-local top = Instance.new("Frame", panel)
-top.Size = UDim2.new(1, 0, 0, 44)
-top.BackgroundColor3 = Color3.fromRGB(28,28,28)
-top.BorderSizePixel = 0
-Instance.new("UICorner", top).CornerRadius = UDim.new(0,16)
+local List = Instance.new("UIListLayout", MainFrame)
+List.Padding = UDim.new(0, 5)
+List.HorizontalAlignment = "Center"
 
-local title = Instance.new("TextLabel", top)
-title.Size = UDim2.new(1, -60, 1, 0)
-title.Position = UDim2.new(0, 15, 0, 0)
-title.Text = "PRO ESP PANEL"
-title.Font = Enum.Font.GothamBold
-title.TextSize = 15
-title.TextColor3 = Color3.new(1,1,1)
-title.BackgroundTransparency = 1
-title.TextXAlignment = Left
-
-local close = Instance.new("TextButton", top)
-close.Size = UDim2.new(0, 32, 0, 32)
-close.Position = UDim2.new(1, -40, 0.5, -16)
-close.Text = "✕"
-close.Font = Enum.Font.GothamBold
-close.TextSize = 14
-close.BackgroundColor3 = Color3.fromRGB(140,40,40)
-close.TextColor3 = Color3.new(1,1,1)
-close.BorderSizePixel = 0
-Instance.new("UICorner", close).CornerRadius = UDim.new(1,0)
-
--- ================== TABS ==================
-local tabs = Instance.new("Frame", panel)
-tabs.Size = UDim2.new(1, -20, 0, 36)
-tabs.Position = UDim2.new(0, 10, 0, 54)
-tabs.BackgroundTransparency = 1
-
-local function tabButton(text, x)
-	local b = Instance.new("TextButton", tabs)
-	b.Size = UDim2.new(0.33, -6, 1, 0)
-	b.Position = UDim2.new(x, 0, 0, 0)
-	b.Text = text
-	b.Font = Enum.Font.GothamBold
-	b.TextSize = 12
-	b.TextColor3 = Color3.new(1,1,1)
-	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
-	b.BorderSizePixel = 0
-	Instance.new("UICorner", b).CornerRadius = UDim.new(0,10)
-	return b
+local function AddToggle(text, prop)
+    local b = Instance.new("TextButton", MainFrame)
+    b.Size = UDim2.new(0, 220, 0, 35)
+    b.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    b.Text = text .. ": OFF"
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = "Gotham"
+    Instance.new("UICorner", b)
+    
+    b.MouseButton1Click:Connect(function()
+        Settings[prop] = not Settings[prop]
+        b.Text = text .. ": " .. (Settings[prop] and "ON" or "OFF")
+        b.BackgroundColor3 = Settings[prop] and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(40, 40, 40)
+    end)
 end
 
-local espTabBtn   = tabButton("ESP", 0)
-local aimTabBtn   = tabButton("AIMBOT", 0.34)
-local visTabBtn   = tabButton("VISUAL", 0.68)
+AddToggle("Aimbot", "Aimbot")
+AddToggle("Wall Check", "WallCheck")
+AddToggle("ESP Box", "Box")
+AddToggle("ESP Skeleton", "Skeleton")
+AddToggle("ESP Linha", "Lines")
+AddToggle("ESP Vida", "Health")
 
--- ================== PAGES ==================
-local pages = {}
+local FOVBtn = Instance.new("TextButton", MainFrame)
+FOVBtn.Size = UDim2.new(0, 220, 0, 35)
+FOVBtn.Text = "FOV: " .. Settings.FOV
+FOVBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Instance.new("UICorner", FOVBtn)
+FOVBtn.MouseButton1Click:Connect(function()
+    Settings.FOV = (Settings.FOV >= 400) and 80 or Settings.FOV + 40
+    FOVBtn.Text = "FOV: " .. Settings.FOV
+end)
 
-local function createPage()
-	local f = Instance.new("Frame", panel)
-	f.Size = UDim2.new(1, -20, 1, -110)
-	f.Position = UDim2.new(0, 10, 0, 100)
-	f.BackgroundTransparency = 1
-	f.Visible = false
-	return f
+-- =================================================================
+-- FUNÇÕES DE SUPORTE
+-- =================================================================
+local function IsVisible(target)
+    if not Settings.WallCheck then return true end
+    local char = target.Parent
+    local ray = Ray.new(Camera.CFrame.Position, (target.Position - Camera.CFrame.Position).Unit * 1000)
+    local hit, pos = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
+    if hit and hit:IsDescendantOf(char) then
+        return true
+    end
+    return false
 end
 
-pages.ESP = createPage()
-pages.AIM = createPage()
-pages.VIS = createPage()
+local ESP_Table = {}
+local function CreateESP(Player)
+    if Player == LocalPlayer then return end
+    local d = {
+        Box = Drawing.new("Square"),
+        Line = Drawing.new("Line"),
+        Health = Drawing.new("Line"),
+        S1 = Drawing.new("Line"), -- Cabeça para Torso
+        S2 = Drawing.new("Line")  -- Ombro a Ombro
+    }
+    d.Box.Filled = false; d.Box.Thickness = 1
+    ESP_Table[Player] = d
+end
 
--- ================== SWITCH ==================
-local function createSwitch(parent, text, y, state, callback)
-	local holder = Instance.new("Frame", parent)
-	holder.Size = UDim2.new(1, 0, 0, 42)
-	holder.Position = UDim2.new(0, 0, 0, y)
-	holder.BackgroundTransparency = 1
+-- =================================================================
+-- LOOP PRINCIPAL
+-- =================================================================
+RunService.RenderStepped:Connect(function()
+    local Center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
 
-	local label = Instance.new("TextLabel", holder)
-	label.Size = UDim2.new(1, -70, 1, 0)
-	label.Text = text
-	label.Font = Enum.Font.Gotham
-	label.TextSize = 14
-	label.TextColor3 = Color3.new(1,1,1)
-	label.BackgroundTransparency = 1
-	label.TextXAlignment = Left
+    for Player, Drawings in pairs(ESP_Table) do
+        local Char = Player.Character
+        local HRP = Char and Char:FindFirstChild("HumanoidRootPart")
+        local Hum = Char and Char:FindFirstChildOfClass("Humanoid")
+        
+        if Char and HRP and Hum and Hum.Health > 0 then
+            local pos, vis = Camera:WorldToViewportPoint(HRP.Position)
+            local dist = (Camera.CFrame.Position - HRP.Position).Magnitude
 
-	local btn = Instance.new("TextButton", holder)
-	btn.Size = UDim2.new(0, 50, 0, 26)
-	btn.Position = UDim2.new(1, -50, 0.5, -13)
-	btn.BackgroundColor3 = state and Color3.fromRGB(0,170,120) or Color3.fromRGB(80,80,80)
-	btn.Text = ""
-	btn.BorderSizePixel = 0
-	Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
+            if vis and dist <= Settings.MaxDistance and (not Settings.TeamCheck or Player.Team ~= LocalPlayer.Team) then
+                local head = Char:FindFirstChild("Head")
+                if head then
+                    local headP = Camera:WorldToViewportPoint(head.Position)
+                    local h = math.abs(headP.Y - Camera:WorldToViewportPoint(HRP.Position - Vector3.new(0,3,0)).Y)
+                    local w = h / 1.5
 
+                    -- BOX & LINHA
+                    Drawings.Box.Visible = Settings.Box
+                    Drawings.Box.Size = Vector2.new(w, h)
+                    Drawings.Box.Position = Vector2.new(pos.X - w/2, pos.Y - h/2)
+                    Drawings.Box.Color = IsVisible(head) and Color3.new(0,1,0) or Color3.new(1,0,0)
+
+                    Drawings.Line.Visible = Settings.Lines
+                    Drawings.Line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                    Drawings.Line.To = Vector2.new(pos.X, pos.Y + h/2)
+
+                    -- VIDA
+                    Drawings.Health.Visible = Settings.Health
+                    local hp = Hum.Health / Hum.MaxHealth
+                    Drawings.Health.From = Vector2.new(pos.X - w/2 - 5, pos.Y + h/2)
+                    Drawings.Health.To = Vector2.new(pos.X - w/2 - 5, (pos.Y + h/2) - (h * hp))
+                    Drawings.Health.Color = Color3.fromHSV(hp * 0.3, 1, 1)
+
+                    -- SKELETON CORRIGIDO
+                    Drawings.S1.Visible = Settings.Skeleton
+                    Drawings.S1.From = Vector2.new(headP.X, headP.Y)
+                    Drawings.S1.To = Vector2.new(pos.X, pos.Y)
+                end
+            else
+                for _, v in pairs(Drawings) do v.Visible = false end
+            end
+        else
+            for _, v in pairs(Drawings) do v.Visible = false end
+        end
+    end
+
+    -- AIMBOT COM WALL CHECK
+    if Settings.Aimbot then
+        local target = nil
+        local closest = Settings.FOV
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                if Settings.TeamCheck and p.Team == LocalPlayer.Team then continue end
+                local head = p.Character.Head
+                local pos, vis = Camera:WorldToViewportPoint(head.Position)
+                if vis and IsVisible(head) then
+                    local mag = (Vector2.new(pos.X, pos.Y) - Center).Magnitude
+                    if mag < closest then
+                        closest = mag
+                        target = head
+                    end
+                end
+            end
+        end
+        if target then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), Settings.Smoothness)
+        end
+    end
+end)
+
+Players.PlayerAdded:Connect(CreateESP)
+for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end
 	local ball = Instance.new("Frame", btn)
 	ball.Size = UDim2.new(0, 22, 0, 22)
 	ball.Position = state and UDim2.new(1, -24, 0.5, -11) or UDim2.new(0, 2, 0.5, -11)
