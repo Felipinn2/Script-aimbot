@@ -12,6 +12,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
+local StarterGui = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -31,16 +32,20 @@ UIS.InputEnded:Connect(function(input)
 	end
 end)
 
--- ================= GUI (OPEN BUTTON SIMPLES) =================
-local gui = Instance.new("ScreenGui", game.CoreGui)
+-- ================= GUI =================
+local gui = Instance.new("ScreenGui")
+gui.Name = "ESP_AIM_PANEL"
+gui.ResetOnSpawn = false
+gui.Parent = StarterGui
 
-local open = Instance.new("TextButton", gui)
-open.Size = UDim2.new(0,50,0,50)
-open.Position = UDim2.new(0,20,0.5,0)
-open.Text = "≡"
-open.TextSize = 24
-open.BackgroundColor3 = Color3.fromRGB(30,30,30)
-open.TextColor3 = Color3.new(1,1,1)
+local openBtn = Instance.new("TextButton", gui)
+openBtn.Size = UDim2.new(0,50,0,50)
+openBtn.Position = UDim2.new(0,20,0.5,0)
+openBtn.Text = "≡"
+openBtn.TextSize = 24
+openBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+openBtn.TextColor3 = Color3.new(1,1,1)
+openBtn.BorderSizePixel = 0
 
 local panel = Instance.new("Frame", gui)
 panel.Size = UDim2.new(0,220,0,260)
@@ -49,28 +54,31 @@ panel.BackgroundColor3 = Color3.fromRGB(20,20,20)
 panel.Visible = false
 panel.Active = true
 panel.Draggable = true
+panel.BorderSizePixel = 0
 
-open.MouseButton1Click:Connect(function()
+openBtn.MouseButton1Click:Connect(function()
 	panel.Visible = not panel.Visible
 end)
 
-local function button(text,y,callback)
-	local b = Instance.new("TextButton",panel)
+local function createButton(text, y, callback)
+	local b = Instance.new("TextButton", panel)
 	b.Size = UDim2.new(1,-20,0,35)
 	b.Position = UDim2.new(0,10,0,y)
 	b.Text = text
 	b.BackgroundColor3 = Color3.fromRGB(45,45,45)
 	b.TextColor3 = Color3.new(1,1,1)
 	b.BorderSizePixel = 0
+	b.TextSize = 15
 	b.MouseButton1Click:Connect(callback)
 	return b
 end
 
-button("AIMBOT",20,function() AIMBOT = not AIMBOT end)
-button("ESP BOX",60,function() ESP_BOX = not ESP_BOX end)
-button("ESP LINE",100,function() ESP_LINE = not ESP_LINE end)
-button("ESP NAME",140,function() ESP_NAME = not ESP_NAME end)
-button("FOV +",180,function()
+createButton("ESP BOX",20,function() ESP_BOX = not ESP_BOX end)
+createButton("ESP LINE",60,function() ESP_LINE = not ESP_LINE end)
+createButton("ESP NAME",100,function() ESP_NAME = not ESP_NAME end)
+createButton("TEAM CHECK",140,function() TEAM_CHECK = not TEAM_CHECK end)
+createButton("AIMBOT",180,function() AIMBOT = not AIMBOT end)
+createButton("FOV +",220,function()
 	AIM_FOV += 50
 	if AIM_FOV > 400 then AIM_FOV = 100 end
 end)
@@ -91,9 +99,10 @@ local function addESP(p)
 		line = Drawing.new("Line"),
 		name = Drawing.new("Text")
 	}
+
 	esp[p].box.Thickness = 2
-	esp[p].box.Color = Color3.fromRGB(255,0,0)
 	esp[p].box.Filled = false
+	esp[p].box.Color = Color3.fromRGB(255,0,0)
 
 	esp[p].line.Thickness = 1
 	esp[p].line.Color = Color3.fromRGB(255,255,255)
@@ -101,27 +110,38 @@ local function addESP(p)
 	esp[p].name.Size = 14
 	esp[p].name.Center = true
 	esp[p].name.Outline = true
+	esp[p].name.Color = Color3.fromRGB(255,255,255)
 end
 
-for _,p in pairs(Players:GetPlayers()) do addESP(p) end
+for _,p in pairs(Players:GetPlayers()) do
+	addESP(p)
+end
 Players.PlayerAdded:Connect(addESP)
+Players.PlayerRemoving:Connect(function(p)
+	if esp[p] then
+		for _,d in pairs(esp[p]) do d:Remove() end
+		esp[p] = nil
+	end
+end)
 
 -- ================= TARGET =================
-local function valid(p)
-	if TEAM_CHECK and p.Team == LocalPlayer.Team then return false end
+local function validTarget(p)
+	if TEAM_CHECK and p.Team == LocalPlayer.Team then
+		return false
+	end
 	return true
 end
 
 local function getTarget()
 	local closest, dist = nil, AIM_FOV
-	local mousePos = UIS:GetMouseLocation()
+	local center = Camera.ViewportSize / 2
 
 	for _,p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer and valid(p)
+		if p ~= LocalPlayer and validTarget(p)
 		and p.Character and p.Character:FindFirstChild("Head") then
 			local pos, vis = Camera:WorldToViewportPoint(p.Character.Head.Position)
 			if vis then
-				local d = (Vector2.new(pos.X,pos.Y) - mousePos).Magnitude
+				local d = (Vector2.new(pos.X,pos.Y) - Vector2.new(center.X,center.Y)).Magnitude
 				if d < dist then
 					dist = d
 					closest = p
@@ -134,11 +154,50 @@ end
 
 -- ================= MAIN LOOP =================
 RunService.RenderStepped:Connect(function()
-	local mousePos = UIS:GetMouseLocation()
-	fov.Position = mousePos
+	local center = Camera.ViewportSize / 2
+
+	fov.Position = Vector2.new(center.X, center.Y)
 	fov.Radius = AIM_FOV
 	fov.Visible = AIMBOT
 
+	for p,e in pairs(esp) do
+		if p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+		and validTarget(p) then
+			local pos,vis = Camera:WorldToViewportPoint(p.Character.HumanoidRootPart.Position)
+			if vis then
+				e.box.Visible = ESP_BOX
+				e.box.Size = Vector2.new(40,60)
+				e.box.Position = Vector2.new(pos.X-20,pos.Y-30)
+
+				e.line.Visible = ESP_LINE
+				e.line.From = Vector2.new(center.X, Camera.ViewportSize.Y)
+				e.line.To = Vector2.new(pos.X,pos.Y)
+
+				e.name.Visible = ESP_NAME
+				e.name.Text = p.Name
+				e.name.Position = Vector2.new(pos.X,pos.Y-40)
+			else
+				e.box.Visible = false
+				e.line.Visible = false
+				e.name.Visible = false
+			end
+		else
+			e.box.Visible = false
+			e.line.Visible = false
+			e.name.Visible = false
+		end
+	end
+
+	if AIMBOT and AIMING then
+		local t = getTarget()
+		if t and t.Character and t.Character:FindFirstChild("Head") then
+			Camera.CFrame = CFrame.new(
+				Camera.CFrame.Position,
+				t.Character.Head.Position
+			)
+		end
+	end
+end)
 	for p,e in pairs(esp) do
 		if p.Character and p.Character:FindFirstChild("HumanoidRootPart") and valid(p) then
 			local pos,vis = Camera:WorldToViewportPoint(p.Character.HumanoidRootPart.Position)
